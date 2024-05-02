@@ -6,37 +6,36 @@ uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 uniform float u_time;
 
-vec3 getColor(vec2 st) {
-    vec3 color1 = vec3(0.3, 0.7, 0.9);
-    vec3 color2 = vec3(0.9, 0.2, 0.4);
-    vec3 color3 = vec3(0.8, 0.9, 0.2);
-    
-    vec3 blend1 = mix(color1, color2, st.x);
-    vec3 blend2 = mix(blend1, color3, st.y);
-    
-    return blend2;
+vec2 random2(vec2 p) {
+    return fract(sin(vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)))) * 43758.5453);
+}
+
+float halftonePattern(vec2 uv, float scale) {
+    vec2 p = floor(uv * scale);
+    vec2 f = fract(uv * scale);
+    float rand = random2(p).x;
+    return smoothstep(0.4, 0.5, f.x + rand);
 }
 
 void main() {
     vec2 st = gl_FragCoord.xy / u_resolution.xy;
     st.x *= u_resolution.x / u_resolution.y;
+    vec3 color = vec3(0.0);
 
-    // Grid properties
-    float gridSize = 200.0;
-    float circleSize = 0.04;
+    // Scale
+    float scale = 250.0;
 
-    // Calculate the position in the grid
-    vec2 gridPos = floor(st * gridSize) / gridSize;
+    // Calculate the position of the point in the grid
+    vec2 gridPos = floor(st * scale) / scale;
 
-    // Calculate the distance to the center of the grid cell
-    vec2 cellCenter = gridPos + 0.5 / gridSize;
-    float dist = length(st - cellCenter);
+    // Apply the Halftone Pattern noise formula
+    float halftone = halftonePattern(gridPos, scale);
+    color += halftone;
 
-    // Calculate the circle shape
-    float circleShape = smoothstep(circleSize - 0.005, circleSize + 0.005, dist);
+    // Add caustic effect
+    float m_dist = halftone;
+    float caustic = sin(u_time * 3.0 + m_dist * 10.0);
+    color += caustic;
 
-    // Get color based on position
-    vec3 color = getColor(st);
-
-    gl_FragColor = vec4(color * circleShape, 1.0);
+    gl_FragColor = vec4(color, 1.0);
 }

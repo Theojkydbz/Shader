@@ -45,4 +45,5 @@ void main() {
 
     // Output the final color
     gl_FragColor = vec4(vec3(1.0 - black), 1.0);
+    
 }
